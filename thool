@@ -1,0 +1,138 @@
+#!/usr/bin/env python3
+# Imports
+from requests.exceptions import RequestException
+import argparse
+import pyfiglet
+import requests
+import socket
+import sys
+from termcolor import colored
+
+# Specify HTTP_CODES (More will be added for better enumeration)
+
+HTTP_CODES = [200, 301, 302, 401, 403]
+
+# ASCII Banner
+
+ascii_banner = pyfiglet.figlet_format("THOOL")
+colored_banner = colored(ascii_banner, color='magenta', attrs=['bold'])
+print(colored_banner)
+
+# Adding Arguments with argparse
+
+parser = argparse.ArgumentParser(description="Enumerating Target Domain")
+
+parser.add_argument("-u", "--url", required=True,
+                    help="Target URL (example.com oder https://example.com)")
+
+parser.add_argument("-dir", "--directory_scanning",
+                    action="store_true",
+                    help="Enable directory enumeration")
+
+parser.add_argument("-sub", "--subdomain_scanning",
+                    action="store_true",
+                    help="Enable subdomain enumeration")
+
+parser.add_argument("-port", "--port_scanning",
+                    action="store_true",
+                    help="Enable port scanning")
+
+parser.add_argument("-a", "--every_script",
+                    action="store_true",
+                    help="Run every enumeration script")
+
+parser.add_argument("-w", "--wordlist",
+                    help="Path to wordlist")
+
+args = parser.parse_args()
+
+# Normalising URL
+base_url = args.url
+if not base_url.startswith(("http://", "https://")):
+    base_url = "http://" + base_url
+
+
+# Function for Subdomain enumeration
+
+def sub_scanning():
+    if not args.wordlist:
+        sys.exit("Error: --wordlist is required for subdomain scanning.")
+
+    try:
+        with open(args.wordlist, "r") as wordlist:
+            print(f"[*] Opening wordlist at: {args.wordlist}")
+            subs = []
+            for sub in wordlist:
+                sub = sub.strip()
+
+                target = base_url.replace("://", f"://{sub}.")
+
+                try:
+                    response = requests.get(target, timeout=5)
+
+                    if response.status_code in HTTP_CODES:
+                        print(f"[+] Found: {target} ({response.status_code})")
+                        subs.append(sub)
+
+                except RequestException:
+                    pass
+            print(f'[*] Found {len(subs)} Subdomains for {args.url}')
+
+    except FileNotFoundError:
+        sys.exit("Wordlist not found.")
+
+# Function for Directory enumeration
+
+def dirc_scanning():
+    if not args.wordlist:
+        sys.exit("Error: --wordlist is required for directory scanning.")
+
+    try:
+        with open(args.wordlist, "r") as wordlist:
+            print('[*] Opening wordlist at: ', args.wordlist)
+            dirs = []
+            for directory in wordlist:
+                directory = directory.strip()
+
+                try:
+                    response = requests.get(
+                        f"{base_url}/{directory}",
+                        timeout=5
+                    )
+
+                    if response.status_code in HTTP_CODES:
+                        print(f"[+] Found: /{directory} ({response.status_code})")
+                        dirs.append(directory)
+
+                except RequestException:
+                    pass
+             
+            print(f'[*] Found {len(dirs)} directories for {args.url}')
+
+    except FileNotFoundError:
+        sys.exit("Wordlist not found.")
+
+
+# Choose atleast one scan type
+if not (args.directory_scanning or
+        args.subdomain_scanning or
+        args.port_scanning or
+        args.every_script):
+    sys.exit("You need to specify at least one scan option.")
+
+if args.every_script:
+    dirc_scanning()
+    sub_scanning()
+
+# Run the script that the user wants
+# -dir/--directory_scanning for directory enumeration | -sub/--subdomain_scanning for subdomain enumeration
+else:
+    if args.directory_scanning:
+        dirc_scanning()
+
+    if args.subdomain_scanning:
+        sub_scanning()
+
+
+# Port Scanning will be added
+
