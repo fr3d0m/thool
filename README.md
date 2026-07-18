@@ -10,4 +10,4 @@
 <h4>export PATH="$PATH:/path/to/thool"</h4>
 <h4>Ctrl + O, Enter to save and Ctrl + X to exit</h4>
 <h3>On Linux:</h3>
-<h2>move the file to /usr/local/bin/</h2>
+<h4>move the file to /usr/local/bin/</h4>
