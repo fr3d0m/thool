@@ -1,5 +1,5 @@
 # thool
-<h1>thool is a joint between the words 'the' and 'tool', which should make it easier to remember. Thool is a python file used for enumeration. This tool is only in the beta version and will be overworked by the time.</h1>
+<h3>thool is a joint between the words 'the' and 'tool', which should make it easier to remember. Thool is a python file used for enumeration. This tool is only in the beta version and will be overworked by the time.</h1>
 
 # how to use it
 <p>side note: these steps can only be used on macOS and Linux.</p>
