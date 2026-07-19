@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 # Imports
+from colorama import Back, Fore
 from requests.exceptions import RequestException
 import argparse
+import os
 import pyfiglet
 import requests
 import socket
@@ -23,7 +25,7 @@ print(colored_banner)
 parser = argparse.ArgumentParser(description="Enumerating Target Domain")
 
 parser.add_argument("-u", "--url", required=True,
-                    help="Target URL (example.com oder https://example.com)")
+                    help="Target URL (example.com or https://example.com)")
 
 parser.add_argument("-dir", "--directory_scanning",
                     action="store_true",
@@ -56,11 +58,11 @@ if not base_url.startswith(("http://", "https://")):
 
 def sub_scanning():
     if not args.wordlist:
-        sys.exit("Error: --wordlist is required for subdomain scanning.")
+        sys.exit(Fore.RED + "[-] -w/--wordlist is required for subdomain scanning.")
 
     try:
         with open(args.wordlist, "r") as wordlist:
-            print(f"[*] Opening wordlist at: {args.wordlist}")
+            print(Fore.CYAN + f"[*] Opening wordlist at: {args.wordlist}")
             subs = []
             for sub in wordlist:
                 sub = sub.strip()
@@ -71,25 +73,25 @@ def sub_scanning():
                     response = requests.get(target, timeout=5)
 
                     if response.status_code in HTTP_CODES:
-                        print(f"[+] Found: {target} ({response.status_code})")
+                        print(Fore.GREEN + f"[+] Found: {target} ({response.status_code})")
                         subs.append(sub)
 
                 except RequestException:
                     pass
-            print(f'[*] Found {len(subs)} Subdomains for {args.url}')
+            print(Fore.CYAN + f'[*] Found {len(subs)} Subdomains for {args.url}')
 
     except FileNotFoundError:
-        sys.exit("Wordlist not found.")
+        sys.exit(Fore.RED + f"[-] Wordlist not found at: {args.wordlist}")
 
 # Function for Directory enumeration
 
 def dirc_scanning():
     if not args.wordlist:
-        sys.exit("Error: --wordlist is required for directory scanning.")
+        sys.exit(Fore.RED + "[-] -w/--wordlist is required for directory scanning.")
 
     try:
         with open(args.wordlist, "r") as wordlist:
-            print('[*] Opening wordlist at: ', args.wordlist)
+            print(Fore.CYAN + '[*] Opening wordlist at: ', args.wordlist)
             dirs = []
             for directory in wordlist:
                 directory = directory.strip()
@@ -101,16 +103,16 @@ def dirc_scanning():
                     )
 
                     if response.status_code in HTTP_CODES:
-                        print(f"[+] Found: /{directory} ({response.status_code})")
+                        print(Fore.GREEN + f"[+] Found: /{directory} ({response.status_code})")
                         dirs.append(directory)
 
                 except RequestException:
                     pass
              
-            print(f'[*] Found {len(dirs)} directories for {args.url}')
+            print(Fore.CYAN + f'[*] Found {len(dirs)} directories for {args.url}')
 
     except FileNotFoundError:
-        sys.exit("Wordlist not found.")
+        sys.exit(Fore.RED + f"[-] Wordlist not found at: {args.wordlist}")
 
 
 # Choose atleast one scan type
@@ -118,7 +120,7 @@ if not (args.directory_scanning or
         args.subdomain_scanning or
         args.port_scanning or
         args.every_script):
-    sys.exit("You need to specify at least one scan option.")
+    sys.exit(Fore.RED + "[-] You need to specify at least one scan option.")
 
 if args.every_script:
     dirc_scanning()
@@ -135,4 +137,3 @@ else:
 
 
 # Port Scanning will be added
-
