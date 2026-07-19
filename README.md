@@ -7,11 +7,9 @@
 <h3>On macOS:</h3>
 ```bash 
  ➜  ~ nano ~/.zshrc
- ```
 <h4>Then on the last line put this:</h4>
 ```bash
 export PATH="$PATH:/path/to/thool"
-```
 
 <h4>Ctrl + O, Enter to save and Ctrl + X to exit</h4>
 <h3>On Linux:</h3>
