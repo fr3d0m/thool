@@ -5,3 +5,5 @@ sys
 argparse
 socket
 termcolor
+os
+request.exceptions
