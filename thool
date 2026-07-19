@@ -24,14 +24,17 @@ print(colored_banner)
 
 parser = argparse.ArgumentParser(description="Enumerating Target Domain")
 
-parser.add_argument("-u", "--url", required=True,
+parser.add_argument("-u", "--url",
                     help="Target URL (example.com or https://example.com)")
 
-parser.add_argument("-dir", "--directory_scanning",
+parser.add_argument("-t", "--target",
+                    help="Target IP")
+
+parser.add_argument("-dir", "--directory_enum",
                     action="store_true",
                     help="Enable directory enumeration")
 
-parser.add_argument("-sub", "--subdomain_scanning",
+parser.add_argument("-sub", "--subdomain_enum",
                     action="store_true",
                     help="Enable subdomain enumeration")
 
@@ -49,14 +52,48 @@ parser.add_argument("-w", "--wordlist",
 args = parser.parse_args()
 
 # Normalising URL
-base_url = args.url
-if not base_url.startswith(("http://", "https://")):
-    base_url = "http://" + base_url
+if args.url:
+    base_url = args.url
+    if not base_url.startswith(("http://", "https://")):
+        base_url = "http://" + base_url
+
+# Setting the target IP 
+target_ip = args.target
+
+# Function for Port Scanning
+def port_scanning():
+    open_ports = []
+    closed_ports = []
+    
+    for i in range(1001):
+        with socket.socket() as s:
+            s.settimeout(1)
+            try:
+                s.connect((target_ip, i))
+                open_ports.append(i)
+            except ConnectionRefusedError:
+                closed_ports.append(i)
+            except ConnectionError:
+                continue
+            except TimeoutError:
+                continue
+
+    len_closed = len(closed_ports)
+    len_open = len(open_ports)
+    print(Fore.CYAN + f"[*] Scan complete\n{'-' * 80}")
+    print(Fore.CYAN + f"[*] Found {len_closed + len_open} ports")
+    print(Fore.CYAN + f"PORT{' ' * 20}STATUS\n{'-' * 80}")
+    for port in open_ports:
+        print(Fore.GREEN + f"{port}{' ' * 20}OPEN\n")
+    for port in closed_ports:
+        print(Fore.LIGHTRED_EX + f"{port}{' ' * 20}CLOSED\n")
+        
 
 
 # Function for Subdomain enumeration
 
-def sub_scanning():
+def sub_enum():
+    print(Fore.CYAN + f'[*] Starting Subdomain Enumeration\n{'-' * 80}')
     if not args.wordlist:
         sys.exit(Fore.RED + "[-] -w/--wordlist is required for subdomain scanning.")
 
@@ -78,20 +115,21 @@ def sub_scanning():
 
                 except RequestException:
                     pass
-            print(Fore.CYAN + f'[*] Found {len(subs)} Subdomains for {args.url}')
+            print(Fore.CYAN + f"[*] Found {len(subs)} Subdomains for {args.url}\n\n")
 
     except FileNotFoundError:
         sys.exit(Fore.RED + f"[-] Wordlist not found at: {args.wordlist}")
 
 # Function for Directory enumeration
 
-def dirc_scanning():
+def dir_enum():
+    print(Fore.CYAN + f"[*] Starting Directory Enumeration\n{'-' * 80}")
     if not args.wordlist:
         sys.exit(Fore.RED + "[-] -w/--wordlist is required for directory scanning.")
 
     try:
         with open(args.wordlist, "r") as wordlist:
-            print(Fore.CYAN + '[*] Opening wordlist at: ', args.wordlist)
+            print(Fore.CYAN + "[*] Opening wordlist at: ", args.wordlist)
             dirs = []
             for directory in wordlist:
                 directory = directory.strip()
@@ -109,31 +147,52 @@ def dirc_scanning():
                 except RequestException:
                     pass
              
-            print(Fore.CYAN + f'[*] Found {len(dirs)} directories for {args.url}')
+            print(Fore.CYAN + f"[*] Found {len(dirs)} directories for {args.url}\n\n")
 
     except FileNotFoundError:
         sys.exit(Fore.RED + f"[-] Wordlist not found at: {args.wordlist}")
 
 
+
 # Choose atleast one scan type
-if not (args.directory_scanning or
-        args.subdomain_scanning or
+if not (args.directory_enum or
+        args.subdomain_enum or
         args.port_scanning or
         args.every_script):
     sys.exit(Fore.RED + "[-] You need to specify at least one scan option.")
 
+# Checking if either an URL or IP has been passed
+if not args.url and not args.target:
+    sys.exit(Fore.RED + "[-] Specify an IP or URL")
+
+# Checking if two targets have been passed
+if args.url and args.target:
+    sys.exit(Fore.RED + "[-] Specify only one target")
+
+
+
+# Checking if an IP has been passed when port scanning
+if args.port_scanning and not args.target:
+    sys.exit(Fore.RED + "[-] You need to specify an IP for Port Scanning")
+
 if args.every_script:
-    dirc_scanning()
-    sub_scanning()
+    dir_enum()
+    sub_enum()
+    port_scanning(target_ip)
 
 # Run the script that the user wants
-# -dir/--directory_scanning for directory enumeration | -sub/--subdomain_scanning for subdomain enumeration
+# -dir/--directory_scanning for directory enumeration | -sub/--subdomain_scanning for subdomain enumeration | -p/--port_scanning for Port Scanning
 else:
-    if args.directory_scanning:
-        dirc_scanning()
+    if args.directory_enum:
+        dir_enum()
 
-    if args.subdomain_scanning:
-        sub_scanning()
+    if args.subdomain_enum:
+        sub_enum()
+    
+    if args.port_scanning:
+        port_scanning()
 
 
-# Port Scanning will be added
+
+
+
