@@ -39,7 +39,7 @@ parser.add_argument("-sub", "--subdomain_enum",
                     help="Enable subdomain enumeration")
 
 parser.add_argument("-port", "--port_scanning",
-                    action="store_true",
+                    action='store_true',
                     help="Enable port scanning")
 
 parser.add_argument("-a", "--every_script",
@@ -51,6 +51,7 @@ parser.add_argument("-w", "--wordlist",
 
 args = parser.parse_args()
 
+
 # Normalising URL
 if args.url:
     base_url = args.url
@@ -61,11 +62,11 @@ if args.url:
 target_ip = args.target
 
 # Function for Port Scanning
-def port_scanning():
+def port_scan():
     open_ports = []
     closed_ports = []
-    
-    for i in range(1001):
+    filtered_ports = []
+    for i in range(1, 1001):
         with socket.socket() as s:
             s.settimeout(1)
             try:
@@ -76,18 +77,20 @@ def port_scanning():
             except ConnectionError:
                 continue
             except TimeoutError:
-                continue
+                filtered_ports.append(i)
+            except OSError as e:
+                sys.exit(f"[-] Exiting Program: {e}")
+
 
     len_closed = len(closed_ports)
     len_open = len(open_ports)
-    print(Fore.CYAN + f"[*] Scan complete\n{'-' * 80}")
-    print(Fore.CYAN + f"[*] Found {len_closed + len_open} ports")
     print(Fore.CYAN + f"PORT{' ' * 20}STATUS\n{'-' * 80}")
     for port in open_ports:
         print(Fore.GREEN + f"{port}{' ' * 20}OPEN\n")
-    for port in closed_ports:
-        print(Fore.LIGHTRED_EX + f"{port}{' ' * 20}CLOSED\n")
-        
+    for port in filtered_ports:
+        print(Fore.YELLOW + f"{port}{' ' * 20}FILTERED\n")
+    print(Fore.CYAN + f"[*] Found {len_closed + len_open} ports")
+    print(Fore.CYAN + f"[*] Scan complete\n{'-' * 80}")
 
 
 # Function for Subdomain enumeration
@@ -178,7 +181,7 @@ if args.port_scanning and not args.target:
 if args.every_script:
     dir_enum()
     sub_enum()
-    port_scanning(target_ip)
+    port_scan()
 
 # Run the script that the user wants
 # -dir/--directory_scanning for directory enumeration | -sub/--subdomain_scanning for subdomain enumeration | -p/--port_scanning for Port Scanning
@@ -188,9 +191,14 @@ else:
 
     if args.subdomain_enum:
         sub_enum()
-    
+
     if args.port_scanning:
-        port_scanning()
+        port_scan()
+
+
+
+
+
 
 
 
