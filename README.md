@@ -17,7 +17,7 @@ export PATH="$PATH:/path/to/thool"
 
 # How to use it
 ```bash
-(venv) ➜  ~ thool -h
+(venv) ➜  tools git:(main) ✗ thool -h
  _____ _   _  ___   ___  _     
 |_   _| | | |/ _ \ / _ \| |    
   | | | |_| | | | | | | | |    
@@ -25,16 +25,17 @@ export PATH="$PATH:/path/to/thool"
   |_| |_| |_|\___/ \___/|_____|
                                
 
-usage: thool [-h] -u URL [-dir] [-sub] [-port] [-a] [-w WORDLIST]
+usage: thool [-h] [-u URL] [-t TARGET] [-dir] [-sub] [-port] [-a] [-w WORDLIST]
 
 Enumerating Target Domain
 
 options:
   -h, --help            show this help message and exit
-  -u, --url URL         Target URL (example.com oder https://example.com)
-  -dir, --directory_scanning
+  -u, --url URL         Target URL (example.com or https://example.com)
+  -t, --target TARGET   Target IP
+  -dir, --directory_enum
                         Enable directory enumeration
-  -sub, --subdomain_scanning
+  -sub, --subdomain_enum
                         Enable subdomain enumeration
   -port, --port_scanning
                         Enable port scanning
