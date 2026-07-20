@@ -21,7 +21,7 @@ udp_common_ports = [2,3,7,9,13,17,19,20,21,22,23,37,38,42,49,53,67,68,69,80,88,1
 
 # ASCII Banner
 ascii_banner = pyfiglet.figlet_format("THOOL")
-colored_banner = colored(ascii_banner, color='magenta', attrs=['bold'])
+colored_banner = colored(ascii_banner, color='cyan', attrs=['bold'])
 print(colored_banner)
 
 # Adding Arguments with argparse
@@ -48,11 +48,19 @@ parser.add_argument("-a", "--every_script",
                     action="store_true",
                     help="Run every enumeration script")
 
+parser.add_argument("-o", "--output",
+                    action='store_true',
+                    help="Outputs the result into a file")
+
 parser.add_argument("-w", "--wordlist",
                     help="Path to wordlist")
 
 args = parser.parse_args()
 
+# Setting up the result files
+port_result = ''
+dir_result = ''
+sub_result = ''
 
 # Normalising URL
 if args.url:
@@ -62,6 +70,15 @@ if args.url:
 
 # Setting the target IP 
 target_ip = args.target
+
+# Setting file name
+file_name = args.output
+
+# Function for output file
+def output_file():
+    with open(f'thool_results.txt', 'w') as file:
+        file.write(port_result)
+        print(f'[*] File has been created under: {os.getcwd()}/thool_results.txt')
 
 # Function for Port Scanning
 def port_scan():
@@ -84,21 +101,23 @@ def port_scan():
                 except OSError as e:
                     sys.exit(f"[-] Exiting Program: {e}")
 
-#    if args.port_scanning == 'udp':
-#        for port in udp_common_ports:
-#            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
-#                s.settimeout(1)
-#                try:
-#                    s.connect((target_ip, port))
-#                    open_ports.append(port)
-#                except ConnectionRefusedError:
-#                    closed_ports.append(port)
-#                except ConnectionError:
-#                    continue
-#                except TimeoutError:
-#                    filtered_ports.append(port)
-#                except OSError as e:
-#                    sys.exit(f"[-] Exiting Program: {e}")
+    if args.port_scanning == 'udp':
+        for port in udp_common_ports:
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+                s.settimeout(1)
+                try:
+                    s.connect((target_ip, port))
+                    s.send(b'')
+                    response = s.recv(1024)
+                    if response:
+                        open_ports.append(port)
+                except ConnectionRefusedError:
+                    closed_ports.append(port) 
+                except TimeoutError:
+                    filtered_ports.append(port) 
+                except OSError as e:
+                    sys.exit(Fore.RED + f'[-] Exiting Program: OSError occured\n{e}') 
+        print(Fore.CYAN + "[*] When scanning with udp, filtered ports can be open")
 
 
     len_filtered = len(filtered_ports)
@@ -110,7 +129,7 @@ def port_scan():
         print(Fore.YELLOW + f"{port}{' ' * 20}FILTERED\n")
     print(Fore.CYAN + f"[*] Found {len_filtered + len_open} ports")
     print(Fore.CYAN + f"[*] Scan complete\n{'-' * 80}")
-
+    port_result = f'Port Scanning\n{'-' * 80}\n\nOPEN PORTS:\n{open_ports}\n\nFILTERED PORTS:\n{filtered_ports}'
 
 # Function for Subdomain enumeration
 
@@ -183,6 +202,10 @@ if not (args.directory_enum or
         args.every_script):
     sys.exit(Fore.RED + "[-] You need to specify at least one scan option.")
 
+#
+if args.port_scanning == '':
+    args.port_scanning = 'tcp'
+
 # Checking if either TCP or UDP has been chosen
 if not args.port_scanning == 'tcp' and args.port_scanning != 'udp':
     sys.exit(Fore.RED + "[-] Specify Portscanning -p tcp | -p udp")
@@ -201,6 +224,9 @@ if args.url and args.target:
 if args.port_scanning and not args.target:
     sys.exit(Fore.RED + "[-] You need to specify an IP for Port Scanning")
 
+# Checking if a txt file name has been passed
+# Still in progress!!!!!
+
 if args.every_script:
     dir_enum()
     sub_enum()
@@ -217,6 +243,13 @@ else:
 
     if args.port_scanning:
         port_scan()
+    if args.output:
+        output_file()
+
+
+
+
+
 
 
 
